@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
+	// "database/sql"
 	"encoding/csv"
-	"strconv"
-	"strings"
-	"time"
+	// "strconv"
+	// "strings"
+	// "time"
 
 	// "fmt"
 	"log"
@@ -14,6 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	// "time"
 	//"github.com/go-co-op/gocron"
+	"github.com/gavinlin/covid-tracker-backend/data"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -62,8 +63,11 @@ func main() {
 
 	channel := make(chan [][]string)
 	go task(channel)
-	data := <- channel
+	csvdata := <- channel
+	dataService := data.NewFakeDataService()
+	dataService.InitDatabase(csvdata)
 
+	/*
 	connStr := "postgres://postgres:apple@localhost/covid-19?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -108,4 +112,5 @@ func main() {
 		log.Println(err)
 	}
 	log.Println("has next row", rows.Next())
+	*/
 }
