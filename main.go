@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/csv"
 
-	// "fmt"
 	"log"
 	"net/http"
 	_ "github.com/lib/pq"
@@ -12,6 +11,12 @@ import (
 	//"github.com/go-co-op/gocron"
 	"github.com/gavinlin/covid-tracker-backend/data"
 )
+
+type MainStruct struct {
+	DataService data.DataService
+}
+
+var mainStruct MainStruct
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hellow world"))
@@ -35,7 +40,7 @@ func readCSVFromURL(url string) ([][] string, error) {
 	return data, nil
 }
 
-func task(channel chan[][]string) {
+func downloadData(channel chan[][]string) {
 	const url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
 
 	data, err := readCSVFromURL(url)
@@ -45,30 +50,46 @@ func task(channel chan[][]string) {
 	channel <- data
 }
 
-func main() {
-	// mux := http.NewServeMux()
-	// mux.HandleFunc("/", home)
-
-	// s1 := gocron.NewScheduler(time.UTC)
-	// s1.Every(10).Second().Do(task)
-	// s1.Start()
-
-	// log.Println("Start server on :5000")
-	// err := http.ListenAndServe(":5000", mux)
-	// log.Fatal(err)
-
+func task() {
 	channel := make(chan [][]string)
-	go task(channel)
+	go downloadData(channel)
 	csvdata := <- channel
 
+	mainStruct.DataService.UpdateDatabase(csvdata)
+}
+
+func initDB() *sql.DB {
 	connStr := "postgres://postgres:apple@localhost/covid-19?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Println(err)
+		panic(err)
+	}
+	return db
+}
+
+func startDataScheduler () {
+	// s1 := gocron.NewScheduler(time.UTC)
+	// s1.Every(10).Second().Do(task)
+	// s1.Start()
+}
+
+
+func main() {
+
+	db := initDB()
+	dataService := data.NewPostgresDataService(db)
+
+	mainStruct = MainStruct{
+		DataService: dataService,
 	}
 
-	dataService := data.NewPostgresDataService(db)
-	dataService.UpdateDatabase(csvdata)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", home)
 
+	log.Println("Start server on :5000")
+	err := http.ListenAndServe(":5000", mux)
+	if err != nil {
+		log.Println(err)
+	}
 	defer db.Close()
 }
