@@ -1,18 +1,14 @@
 package main
 
 import (
-	// "database/sql"
+	"database/sql"
 	"encoding/csv"
-	// "strconv"
-	// "strings"
-	// "time"
 
 	// "fmt"
 	"log"
 	"net/http"
-
 	_ "github.com/lib/pq"
-	// "time"
+
 	//"github.com/go-co-op/gocron"
 	"github.com/gavinlin/covid-tracker-backend/data"
 )
@@ -64,53 +60,15 @@ func main() {
 	channel := make(chan [][]string)
 	go task(channel)
 	csvdata := <- channel
-	dataService := data.NewFakeDataService()
-	dataService.InitDatabase(csvdata)
 
-	/*
 	connStr := "postgres://postgres:apple@localhost/covid-19?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Println(err)
 	}
-	defer db.Close()
-	
-	db.Query("DELETE FROM country")
-	sqlStatement := `INSERT INTO country (country, state, lat, long) VALUES ($1, $2, $3, $4) RETURNING id`
-	dataSQLStatement := `INSERT INTO data (date, country_id, confirmed) VALUES ($1, $2, $3)`
-	for i, s := range data {
-		if i != 0 {
-			stmt, err := db.Prepare(sqlStatement)
-			if err != nil {
-				panic(err)
-			}
-			defer stmt.Close()
-			var countryID int
-			 err = stmt.QueryRow(s[1], s[0], s[2], s[3]).Scan(&countryID)
-			if err != nil {
-				panic(err)
-			}
-			for i, confirmed := range s {
-				if(i > 3) {
-					dateSlice := strings.Split(data[0][i], "/")
-					year, _:= strconv.Atoi("20" + dateSlice[2])
-					month, _ := strconv.Atoi(dateSlice[0])
-					day, _ := strconv.Atoi(dateSlice[1])
-					
-					date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
-					_ , err = db.Exec(dataSQLStatement, date, countryID, confirmed)
-					if err != nil {
-						panic(err)
-					}
-				}
-			}
-		}
-	}
 
-	rows, err := db.Query("SELECT * FROM country")
-	if err != nil {
-		log.Println(err)
-	}
-	log.Println("has next row", rows.Next())
-	*/
+	dataService := data.NewPostgresDataService(db)
+	dataService.UpdateDatabase(csvdata)
+
+	defer db.Close()
 }

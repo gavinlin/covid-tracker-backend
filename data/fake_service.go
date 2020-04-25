@@ -11,9 +11,9 @@ func NewFakeDataService() DataService {
 }
 
 func (s *fakeDataService) InitDatabase(data [][]string) {
-	fmt.Printf("init fake database")
+	fmt.Println("init fake database")
 }
 
 func (s *fakeDataService) UpdateDatabase(data [][]string) {
-	fmt.Printf("update fake database")
+	fmt.Println("update fake database")
 }
