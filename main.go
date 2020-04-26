@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/csv"
 
 	"log"
@@ -10,6 +9,7 @@ import (
 
 	//"github.com/go-co-op/gocron"
 	"github.com/gavinlin/covid-tracker-backend/data"
+	"github.com/gavinlin/covid-tracker-backend/common"
 )
 
 type MainStruct struct {
@@ -58,14 +58,14 @@ func task() {
 	mainStruct.DataService.UpdateDatabase(csvdata)
 }
 
-func initDB() *sql.DB {
-	connStr := "postgres://postgres:apple@localhost/covid-19?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		panic(err)
-	}
-	return db
-}
+// func initDB() *sql.DB {
+// 	connStr := "postgres://postgres:apple@localhost/covid-19?sslmode=disable"
+// 	db, err := sql.Open("postgres", connStr)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return db
+// }
 
 func startDataScheduler () {
 	// s1 := gocron.NewScheduler(time.UTC)
@@ -74,10 +74,9 @@ func startDataScheduler () {
 	task()
 }
 
-
 func main() {
 
-	db := initDB()
+	db := common.Init()
 	dataService := data.NewPostgresDataService(db)
 
 	mainStruct = MainStruct{
