@@ -71,6 +71,7 @@ func startDataScheduler () {
 	// s1 := gocron.NewScheduler(time.UTC)
 	// s1.Every(10).Second().Do(task)
 	// s1.Start()
+	task()
 }
 
 
@@ -82,6 +83,8 @@ func main() {
 	mainStruct = MainStruct{
 		DataService: dataService,
 	}
+
+	startDataScheduler()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", home)

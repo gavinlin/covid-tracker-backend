@@ -1,7 +1,9 @@
 package data
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -52,6 +54,47 @@ func (p *postgresDataService) InitDatabase(data [][]string) {
 	}
 }
 
+type Country struct {
+	ID int `TbField:id`
+	Country string `TbField:country`
+	State sql.NullString `TbField:state`
+	lat float32 `TbField: lat`
+	long float32 `TbField: long`
+}
+
 func (p *postgresDataService) UpdateDatabase(data [][]string) {
 	fmt.Println("Update data to database")
+	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, 1*time.Second)
+
+	countrys := []Country{}
+
+	countryAndRegionStatement := `SELECT * FROM country WHERE country=$1 AND state=$2`
+	for i, d := range data {
+		if i != 0 {
+			rows, err := p.DB.QueryContext(ctx, countryAndRegionStatement, d[1], d[0])
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var country Country
+				err = rows.Scan(
+					&country.ID,
+					&country.Country, 
+					&country.State,
+					&country.lat,
+					&country.long)
+
+				if err != nil {
+					log.Fatal(err)
+				}
+				countrys = append(countrys, country)
+			}
+		}
+	}
+	fmt.Println("array size is ", len(countrys))
+	for _, c := range countrys {
+		fmt.Println("id ", c.ID, " and name ", c.Country )
+	}
 }
