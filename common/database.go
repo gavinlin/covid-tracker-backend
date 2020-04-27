@@ -2,7 +2,7 @@ package common
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 type Database struct {
@@ -12,8 +12,8 @@ type Database struct {
 var DB *gorm.DB
 
 func Init() *gorm.DB {
-	// db, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=covid-19 password=appl")
-	db, err := gorm.Open("postgres", "postgres://postgres:apple@localhost/covid-19?sslmode=disable")
+	// db, err := gorm.Open("postgres", "postgres://postgres:apple@localhost/covid-19?sslmode=disable")
+	db, err := gorm.Open("sqlite3", "./covid.db")
 	if err !=nil {
 		panic(err)
 	}

@@ -56,6 +56,7 @@ func task() {
 	csvdata := <- channel
 
 	mainStruct.DataService.UpdateDatabase(csvdata)
+	// mainStruct.DataService.InitDatabase(csvdata)
 }
 
 // func initDB() *sql.DB {
@@ -77,7 +78,7 @@ func startDataScheduler () {
 func main() {
 
 	db := common.Init()
-	dataService := data.NewPostgresDataService(db)
+	dataService := data.NewDBDataService(db)
 
 	mainStruct = MainStruct{
 		DataService: dataService,
