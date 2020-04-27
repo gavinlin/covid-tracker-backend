@@ -10,12 +10,13 @@ import (
 	"github.com/gavinlin/covid-tracker-backend/common"
 	"github.com/gavinlin/covid-tracker-backend/data"
 	"github.com/gavinlin/covid-tracker-backend/countries"
+	"github.com/gavinlin/covid-tracker-backend/services"
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 )
 
 type MainStruct struct {
-	DataService data.DataService
+	DataService services.DataService
 }
 
 var mainStruct MainStruct
@@ -70,7 +71,7 @@ func main() {
 
 	db := common.Init()
 	defer db.Close()
-	dataService := data.NewDBDataService(db)
+	dataService := services.NewDBDataService(db)
 
 	mainStruct = MainStruct{
 		DataService: dataService,

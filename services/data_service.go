@@ -1,4 +1,4 @@
-package data
+package services
 
 type DataService interface {
 	InitDatabase(data [][] string)

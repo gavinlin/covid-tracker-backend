@@ -2,17 +2,16 @@ package countries
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gavinlin/covid-tracker-backend/data"
 )
 
 type CountriesSerializer struct {
 	C *gin.Context
-	Countries []data.Country
+	Countries []Country
 }
 
 type CountrySerializer struct {
 	C *gin.Context
-	Country data.Country
+	Country Country
 }
 
 type CountryResponse struct {
