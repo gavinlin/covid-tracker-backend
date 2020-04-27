@@ -3,7 +3,7 @@ module github.com/gavinlin/covid-tracker-backend
 go 1.14
 
 require (
-	github.com/gin-gonic/gin v1.6.2 // indirect
+	github.com/gin-gonic/gin v1.6.2
 	github.com/go-co-op/gocron v0.1.1
 	github.com/golang/protobuf v1.4.0 // indirect
 	github.com/jinzhu/gorm v1.9.12

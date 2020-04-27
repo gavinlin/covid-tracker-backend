@@ -2,14 +2,16 @@ package main
 
 import (
 	"encoding/csv"
+	"time"
 
 	"log"
 	"net/http"
-	_ "github.com/lib/pq"
 
-	//"github.com/go-co-op/gocron"
-	"github.com/gavinlin/covid-tracker-backend/data"
 	"github.com/gavinlin/covid-tracker-backend/common"
+	"github.com/gavinlin/covid-tracker-backend/data"
+	"github.com/gavinlin/covid-tracker-backend/countries"
+	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron"
 )
 
 type MainStruct struct {
@@ -56,28 +58,18 @@ func task() {
 	csvdata := <- channel
 
 	mainStruct.DataService.UpdateDatabase(csvdata)
-	// mainStruct.DataService.InitDatabase(csvdata)
 }
 
-// func initDB() *sql.DB {
-// 	connStr := "postgres://postgres:apple@localhost/covid-19?sslmode=disable"
-// 	db, err := sql.Open("postgres", connStr)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	return db
-// }
-
 func startDataScheduler () {
-	// s1 := gocron.NewScheduler(time.UTC)
-	// s1.Every(10).Second().Do(task)
-	// s1.Start()
-	task()
+	s1 := gocron.NewScheduler(time.UTC)
+	s1.Every(5).Hours().Do(task)
+	s1.Start()
 }
 
 func main() {
 
 	db := common.Init()
+	defer db.Close()
 	dataService := data.NewDBDataService(db)
 
 	mainStruct = MainStruct{
@@ -86,13 +78,15 @@ func main() {
 
 	startDataScheduler()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
+	// mux := http.NewServeMux()
+	// mux.HandleFunc("/", home)
+	// log.Println("Start server on :5000")
+	// err := http.ListenAndServe(":5000", mux)
 
-	log.Println("Start server on :5000")
-	err := http.ListenAndServe(":5000", mux)
-	if err != nil {
-		log.Println(err)
-	}
-	defer db.Close()
+	r := gin.Default()
+
+	v1 := r.Group("/api")
+
+	countries.CountriesRegister(v1.Group("/countries"))
+	r.Run()
 }

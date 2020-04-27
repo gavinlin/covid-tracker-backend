@@ -1,11 +1,9 @@
 package data
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/jinzhu/gorm"
 )
 
@@ -35,18 +33,18 @@ func (p *dBDataService) InitDatabase(data [][]string) {
 				}
 				p.DB.Create(&country)
 				log.Println("country id is ", country.ID)
-			for i, confirmed := range s {
-				if (i > 3) {
-					currentDate := getTime(data[0][i])
-					confirmedNum, _ := strconv.Atoi(confirmed)
-					d := Data {
-						Date: currentDate,
-						Confirmed: confirmedNum,
-						CountryID: country.ID,
+				for i, confirmed := range s {
+					if (i > 3) {
+						currentDate := getTime(data[0][i])
+						confirmedNum, _ := strconv.Atoi(confirmed)
+						d := Data {
+							Date: currentDate,
+							Confirmed: confirmedNum,
+							CountryID: country.ID,
+						}
+						p.DB.Create(&d)
 					}
-					p.DB.Create(&d)
 				}
-			}
 			}
 		}
 }
@@ -62,11 +60,29 @@ func getTime(original string) time.Time {
 }
 
 func (p *dBDataService) UpdateDatabase(data [][]string) {
-	var dataArray []Data
-	p.DB.Table("data").Joins("left join country on country.id = data.country_id").Where("country = ? AND state = ?", "Australia", "New South Wales").Find(&dataArray)
-	for _, d := range dataArray {
-		confirmedStr := strconv.Itoa(d.Confirmed)
-		fmt.Println("result id ", d.ID, " date ", d.Date, " confirmed " + confirmedStr)
+	for i, s := range data {
+		if i != 0 {
+			country := Country{
+				Country: s[1],
+				State: s[0],
+				Lat: s[2],
+				Long: s[3],
+			}
+			p.DB.Where(country).FirstOrCreate(&country)
+			
+			log.Println("country id is ", country.ID)
+			for i, confirmed := range s {
+				if (i > 3) {
+					currentDate := getTime(data[0][i])
+					confirmedNum, _ := strconv.Atoi(confirmed)
+					d := Data {
+						Date: currentDate,
+						Confirmed: confirmedNum,
+						CountryID: country.ID,
+					}
+					p.DB.Where(&d).FirstOrCreate(&d)
+				}
+			}
+		}
 	}
-
 }
