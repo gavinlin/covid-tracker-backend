@@ -15,7 +15,7 @@ type CountrySerializer struct {
 }
 
 type CountryResponse struct {
-	ID uint `json:"-"`
+	ID uint `json:"id"`
 	Country string `json:"country"`
 	State string `json:"state"`
 	Lat string `json:"lat"`

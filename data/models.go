@@ -2,6 +2,8 @@ package data
 
 import (
 	"time"
+
+	"github.com/gavinlin/covid-tracker-backend/common"
 )
 
 type Data struct {
@@ -9,4 +11,13 @@ type Data struct {
 	Date time.Time `gorm:"column:date"`
 	Confirmed int `gorm:"column:confirmed"`
 	CountryID uint
+}
+
+func GetData(countryID uint) ([]Data, error) {
+	db := common.GetDB()
+	var data = []Data{}
+
+	err := db.Where("country_id = ?", countryID).Find(&data).Error
+
+	return data, err
 }

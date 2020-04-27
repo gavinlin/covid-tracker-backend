@@ -2,14 +2,15 @@ package main
 
 import (
 	"encoding/csv"
+	"os"
 	"time"
 
 	"log"
 	"net/http"
 
 	"github.com/gavinlin/covid-tracker-backend/common"
-	"github.com/gavinlin/covid-tracker-backend/data"
 	"github.com/gavinlin/covid-tracker-backend/countries"
+	"github.com/gavinlin/covid-tracker-backend/data"
 	"github.com/gavinlin/covid-tracker-backend/services"
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
@@ -67,6 +68,17 @@ func startDataScheduler () {
 	s1.Start()
 }
 
+func initDatabaseIfNotExist() {
+	_, err := os.Stat("./covid.db")
+	if os.IsNotExist(err) {
+		log.Println("Init database")
+		channel := make(chan [][]string)
+		go downloadData(channel)
+		csvdata := <- channel
+		mainStruct.DataService.UpdateDatabase(csvdata)
+	}
+}
+
 func main() {
 
 	db := common.Init()
@@ -83,11 +95,14 @@ func main() {
 	// mux.HandleFunc("/", home)
 	// log.Println("Start server on :5000")
 	// err := http.ListenAndServe(":5000", mux)
+	initDatabaseIfNotExist()
 
 	r := gin.Default()
 
 	v1 := r.Group("/api")
 
 	countries.CountriesRegister(v1.Group("/countries"))
+	data.DataRegister(v1.Group("/data"))
+	
 	r.Run()
 }
