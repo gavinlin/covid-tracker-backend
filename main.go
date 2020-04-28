@@ -26,7 +26,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hellow world"))
 }
 
-func readCSVFromURL(url string) ([][] string, error) {
+func readCSVFromURL(url string) ([][]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func readCSVFromURL(url string) ([][] string, error) {
 	return data, nil
 }
 
-func downloadData(channel chan[][]string) {
+func downloadData(channel chan [][]string) {
 	const url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
 
 	data, err := readCSVFromURL(url)
@@ -57,25 +57,26 @@ func downloadData(channel chan[][]string) {
 func task() {
 	channel := make(chan [][]string)
 	go downloadData(channel)
-	csvdata := <- channel
+	csvdata := <-channel
 
 	mainStruct.DataService.UpdateDatabase(csvdata)
 }
 
-func startDataScheduler () {
+func startDataScheduler() {
 	s1 := gocron.NewScheduler(time.UTC)
 	s1.Every(5).Hours().Do(task)
 	s1.Start()
 }
 
 func initDatabaseIfNotExist() {
-	_, err := os.Stat("./covid.db")
-	if os.IsNotExist(err) {
+	log.Println("Start Init database")
+	fileInfo, err := os.Stat("covid.db")
+	if os.IsNotExist(err) || fileInfo.Size() == 0{
 		log.Println("Init database")
 		channel := make(chan [][]string)
 		go downloadData(channel)
-		csvdata := <- channel
-		mainStruct.DataService.UpdateDatabase(csvdata)
+		csvdata := <-channel
+		mainStruct.DataService.InitDatabase(csvdata)
 	}
 }
 
@@ -95,6 +96,7 @@ func main() {
 	// mux.HandleFunc("/", home)
 	// log.Println("Start server on :5000")
 	// err := http.ListenAndServe(":5000", mux)
+
 	initDatabaseIfNotExist()
 
 	r := gin.Default()
@@ -103,6 +105,6 @@ func main() {
 
 	countries.CountriesRegister(v1.Group("/countries"))
 	data.DataRegister(v1.Group("/data"))
-	
+
 	r.Run()
 }
