@@ -9,3 +9,13 @@ before_install:
   - source $HOME/google-cloud-sdk/path.bash.inc
   - gcloud componets update kubectl
   - gcloud auth activate-service-account --key-file service-account.json
+  - gcloud config set project covid-tracker-275603
+  - gcloud config set compute/zone australia-southeast1-a
+  - gcloud container clusters get-credentials backen-cluster
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+deploy:
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: master
