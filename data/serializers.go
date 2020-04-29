@@ -16,11 +16,23 @@ type DataListSerializer struct {
 	DataList []Data
 }
 
+type LatestDataSerializer struct {
+	C *gin.Context
+	LatestData 
+}
+
 type DataResponse struct {
 	ID uint `json:"-"`
 	Confirmed int `json:"confirmed"`
 	Date time.Time `json:"date"`
 	CountryID uint `json:"country_id"`
+	Recovered int `json:"recovered"`
+	Death int `json:"death"`
+}
+
+type LatestDataResponse struct {
+	Date time.Time `json:"date"`
+	Confirmed int `json:"confirmed"`
 	Recovered int `json:"recovered"`
 	Death int `json:"death"`
 }
@@ -46,3 +58,12 @@ func (s *DataListSerializer) Response() []DataResponse {
 	return response
 }
 
+func (s *LatestDataSerializer) Response() LatestDataResponse{
+	response := LatestDataResponse {
+		Date: s.LatestData.Date,
+		Confirmed: s.LatestData.Confirmed,
+		Death: s.LatestData.Death,
+		Recovered: s.LatestData.Recovered,
+	}
+	return response
+}
