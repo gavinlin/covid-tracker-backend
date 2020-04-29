@@ -13,8 +13,8 @@ import (
 	"github.com/gavinlin/covid-tracker-backend/data"
 	"github.com/gavinlin/covid-tracker-backend/services"
 	"github.com/gin-gonic/gin"
-    "github.com/gin-contrib/cors"
 	"github.com/go-co-op/gocron"
+	cors "github.com/rs/cors/wrapper/gin"
 )
 
 type MainStruct struct {
@@ -101,9 +101,7 @@ func main() {
 	initDatabaseIfNotExist()
 
 	r := gin.Default()
-    config := cors.DefaultConfig()
-    config.AllowOrigins = []string{"http://localhost"}
-    r.Use(cors.New(config))
+  r.Use(cors.Default())
 
 	v1 := r.Group("/api")
 
