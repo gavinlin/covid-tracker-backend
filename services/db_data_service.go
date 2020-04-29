@@ -30,13 +30,7 @@ func (p *dBDataService) InitDatabase(confirmedData [][] string, recoveredData []
 
 	for i, s := range confirmedData{
 		if i != 0 {
-			country := countries.Country{
-				Country: s[1],
-				State: s[0],
-				Lat: s[2],
-				Long: s[3],
-			}
-			p.DB.Create(&country)
+			country := getCountry(s, p.DB)
 			for j, confirmed := range s {
 				if (j > 3) {
 					currentDate := getTime(confirmedData[0][j])
@@ -130,11 +124,13 @@ func updateData(date time.Time, countryID uint, d data.Data, db *gorm.DB) {
 }
 
 func getCountry(array [] string, db *gorm.DB) (countries.Country) {
+			floatLat, _ := strconv.ParseFloat(array[2], 64)
+			floatLong, _ := strconv.ParseFloat(array[3], 64)
 			country := countries.Country{
 				Country: array[1],
 				State: array[0],
-				Lat: array[2],
-				Long: array[3],
+				Lat: strconv.FormatFloat(floatLat, 'f', 2, 64),
+				Long: strconv.FormatFloat(floatLong, 'f', 2, 64),
 			}
 			db.Where(country).FirstOrCreate(&country)
 			return country
