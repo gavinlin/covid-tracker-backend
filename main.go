@@ -45,8 +45,11 @@ func readCSVFromURL(url string) ([][]string, error) {
 	return data, nil
 }
 
-func downloadData(channel chan [][]string) {
-	const url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+const confirmed_url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+const recovered_url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+const death_url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+
+func downloadData(url string, channel chan [][]string) {
 
 	data, err := readCSVFromURL(url)
 	if err != nil {
@@ -56,11 +59,19 @@ func downloadData(channel chan [][]string) {
 }
 
 func task() {
-	channel := make(chan [][]string)
-	go downloadData(channel)
-	csvdata := <-channel
+	confirmedChannel := make(chan [][]string)
+	go downloadData(confirmed_url, confirmedChannel)
 
-	mainStruct.DataService.UpdateDatabase(csvdata)
+	recoveredChannel := make(chan [][]string)
+	go downloadData(recovered_url, recoveredChannel)
+
+	deathChannel := make(chan [][]string)
+	go downloadData(death_url, deathChannel)
+
+	confirmedData := <-confirmedChannel
+	deathData := <- deathChannel
+	recoveredData := <- recoveredChannel
+	mainStruct.DataService.UpdateDatabase(confirmedData, recoveredData, deathData)
 }
 
 func startDataScheduler() {
@@ -73,11 +84,19 @@ func initDatabaseIfNotExist() {
 	log.Println("Start Init database")
 	fileInfo, err := os.Stat("covid.db")
 	if os.IsNotExist(err) || fileInfo.Size() == 0{
-		log.Println("Init database")
-		channel := make(chan [][]string)
-		go downloadData(channel)
-		csvdata := <-channel
-		mainStruct.DataService.InitDatabase(csvdata)
+		confirmedChannel := make(chan [][]string)
+		go downloadData(confirmed_url, confirmedChannel)
+
+		recoveredChannel := make(chan [][]string)
+		go downloadData(recovered_url, recoveredChannel)
+
+		deathChannel := make(chan [][]string)
+		go downloadData(death_url, deathChannel)
+
+		confirmedData := <-confirmedChannel
+		deathData := <- deathChannel
+		recoveredData := <- recoveredChannel
+		mainStruct.DataService.InitDatabase(confirmedData, recoveredData, deathData)
 	}
 }
 

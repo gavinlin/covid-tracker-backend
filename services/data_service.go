@@ -1,6 +1,6 @@
 package services
 
 type DataService interface {
-	InitDatabase(data [][] string)
-	UpdateDatabase(data [][] string)
+	InitDatabase(confirmedData [][] string, recoveredData [][]string, deathData [][]string)
+	UpdateDatabase(confirmedData [][] string, recoveredData [][]string, deathData [][]string)
 }

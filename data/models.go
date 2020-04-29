@@ -10,6 +10,8 @@ type Data struct {
 	ID uint `gorm:"primary_key"`
 	Date time.Time `gorm:"column:date"`
 	Confirmed int `gorm:"column:confirmed"`
+	Recovered int `gorm:"column:recovered"`
+	Death int `gorm:"column:death"`
 	CountryID uint
 }
 

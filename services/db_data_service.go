@@ -22,36 +22,37 @@ func NewDBDataService(db *gorm.DB) DataService {
 	}
 }
 
-func (p *dBDataService) InitDatabase(incomingData [][]string) {
-		p.DB.DropTableIfExists(&countries.Country{})
-		p.DB.DropTableIfExists(&data.Data{})
-		p.DB.AutoMigrate(&countries.Country{})
-		p.DB.AutoMigrate(&data.Data{})
+func (p *dBDataService) InitDatabase(confirmedData [][] string, recoveredData [][]string, deathData [][]string) {
+	p.DB.DropTableIfExists(&countries.Country{})
+	p.DB.DropTableIfExists(&data.Data{})
+	p.DB.AutoMigrate(&countries.Country{})
+	p.DB.AutoMigrate(&data.Data{})
 
-	 	for i, s := range incomingData{
-			if i != 0 {
-				country := countries.Country{
-					Country: s[1],
-					State: s[0],
-					Lat: s[2],
-					Long: s[3],
-				}
-				p.DB.Create(&country)
-				log.Println("country id is ", country.ID)
-				for i, confirmed := range s {
-					if (i > 3) {
-						currentDate := getTime(incomingData[0][i])
-						confirmedNum, _ := strconv.Atoi(confirmed)
-						d := data.Data {
-							Date: currentDate,
-							Confirmed: confirmedNum,
-							CountryID: country.ID,
-						}
-						p.DB.Create(&d)
+	for i, s := range confirmedData{
+		if i != 0 {
+			country := countries.Country{
+				Country: s[1],
+				State: s[0],
+				Lat: s[2],
+				Long: s[3],
+			}
+			p.DB.Create(&country)
+			for j, confirmed := range s {
+				if (j > 3) {
+					currentDate := getTime(confirmedData[0][j])
+					confirmedNum, _ := strconv.Atoi(confirmed)
+					d := data.Data {
+						Date: currentDate,
+						Confirmed: confirmedNum,
+						CountryID: country.ID,
 					}
+					p.DB.Create(&d)
 				}
 			}
 		}
+	}
+	udpateDeathData(deathData, p.DB)
+	updateRecoveredData(recoveredData, p.DB)
 }
 
 func getTime(original string) time.Time {
@@ -64,30 +65,77 @@ func getTime(original string) time.Time {
 	return date
 }
 
-func (p *dBDataService) UpdateDatabase(incomingData [][]string) {
-	for i, s := range incomingData{
+func (p *dBDataService) UpdateDatabase(confirmedData [][] string, recoveredData [][]string, deathData [][]string) {
+	for i, s := range confirmedData{
 		if i != 0 {
-			country := countries.Country{
-				Country: s[1],
-				State: s[0],
-				Lat: s[2],
-				Long: s[3],
-			}
-			p.DB.Where(country).FirstOrCreate(&country)
-			
-			log.Println("country id is ", country.ID)
-			for i, confirmed := range s {
-				if (i > 3) {
-					currentDate := getTime(incomingData[0][i])
+			country := getCountry(s, p.DB)
+			log.Println("update country id is ", country.ID)
+			for j, confirmed := range s {
+				if (j > 3) {
+					currentDate := getTime(confirmedData[0][j])
 					confirmedNum, _ := strconv.Atoi(confirmed)
 					d := data.Data {
 						Date: currentDate,
 						Confirmed: confirmedNum,
 						CountryID: country.ID,
 					}
-					p.DB.Where(&d).FirstOrCreate(&d)
+					updateData(currentDate, country.ID, d, p.DB)
 				}
 			}
 		}
 	}
+	udpateDeathData(deathData, p.DB)
+	updateRecoveredData(recoveredData, p.DB)
+}
+
+func udpateDeathData(deathData [][]string, db *gorm.DB) {
+	for i, s:= range deathData {
+		if i != 0 {
+			country := getCountry(s, db)
+			for j, death := range s {
+				if (j > 3) {
+					currentDate := getTime(deathData[0][j])
+					deathNum, _ := strconv.Atoi(death)
+					d := data.Data {
+						Death: deathNum,
+					}
+					updateData(currentDate, country.ID, d, db)
+				}
+			}
+		}
+	}
+}
+
+func updateRecoveredData(recoveredData [][]string, db *gorm.DB) {
+	for i, s:= range recoveredData {
+		if i != 0 {
+			country := getCountry(s, db)
+			for j, death := range s {
+				if (j > 3) {
+					currentDate := getTime(recoveredData[0][j])
+					recoveredNum, _ := strconv.Atoi(death)
+					d := data.Data {
+						Recovered: recoveredNum,
+					}
+					updateData(currentDate, country.ID, d, db)
+				}
+			}
+		}
+	}
+}
+
+func updateData(date time.Time, countryID uint, d data.Data, db *gorm.DB) {
+	var updatedData data.Data
+	db.Where(data.Data{Date: date, CountryID: countryID}).Assign(&d).FirstOrCreate(&updatedData)
+}
+
+func getCountry(array [] string, db *gorm.DB) (countries.Country) {
+			country := countries.Country{
+				Country: array[1],
+				State: array[0],
+				Lat: array[2],
+				Long: array[3],
+			}
+			db.Where(country).FirstOrCreate(&country)
+			return country
 }

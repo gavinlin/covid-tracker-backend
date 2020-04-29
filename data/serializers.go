@@ -21,6 +21,8 @@ type DataResponse struct {
 	Confirmed int `json:"confirmed"`
 	Date time.Time `json:"date"`
 	CountryID uint `json:"country_id"`
+	Recovered int `json:"recovered"`
+	Death int `json:"death"`
 }
 
 func (s *DataSerializer) Response() DataResponse {
@@ -28,6 +30,8 @@ func (s *DataSerializer) Response() DataResponse {
 		ID: s.Data.ID,
 		Confirmed: s.Data.Confirmed,
 		Date: s.Data.Date,
+		Recovered: s.Data.Recovered,
+		Death: s.Data.Death,
 		CountryID: s.Data.CountryID,
 	}
 	return response
