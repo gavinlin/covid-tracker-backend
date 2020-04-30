@@ -17,7 +17,7 @@ type Data struct {
 	CountryID uint
 }
 
-type LatestData struct {
+type DailyData struct {
 	Date time.Time `json:"date"`
 	Confirmed int `json:"confirmed"`
 	Recovered int `json:"recovered"`
@@ -37,13 +37,13 @@ type SumResult struct{
 	N int
 }
 
-func GetLatestData() (LatestData, error) {
+func GetLatestData() (DailyData, error) {
 	db := common.GetDB()
 	var data Data
 	err := db.Table("data").Order("date DESC").Limit(1).Find(&data).Error
 	if err != nil {
 		fmt.Println(err)
-		return LatestData{}, err
+		return DailyData{}, err
 	}
 	return GetDataByDate(data.Date, db)
 }
@@ -59,27 +59,47 @@ func GetAllDates() ([]time.Time, error) {
 	return dates, err
 }
 
-func GetDataByDate(date time.Time, db *gorm.DB) (LatestData, error) {
+func GetDailyDatas() ([]DailyData, error) {
+	allDailyDatas := []DailyData{}
+	allDates, err := GetAllDates()
+
+	if err != nil {
+		return allDailyDatas, err
+	}
+
+	db := common.GetDB()
+	
+	for _, date := range allDates {
+		dailyData, err := GetDataByDate(date, db)
+		if err != nil {
+			return allDailyDatas, err
+		}
+		allDailyDatas = append(allDailyDatas, dailyData)
+	}
+	return allDailyDatas, nil
+}
+
+func GetDataByDate(date time.Time, db *gorm.DB) (DailyData, error) {
 	var confirmedResult SumResult
 	var deathResult SumResult
 	var recoveredResult SumResult
 	err := db.Table("data").Select("sum(confirmed) as n").Where("date = ?", date).Scan(&confirmedResult).Error
 	if err != nil {
 		fmt.Println(err)
-		return LatestData{}, err
+		return DailyData{}, err
 	}
 	err = db.Table("data").Select("sum(death) as n").Where("date = ?", date).Scan(&deathResult).Error
 	if err != nil {
 		fmt.Println(err)
-		return LatestData{}, err
+		return DailyData{}, err
 	}
 	err = db.Table("data").Select("sum(recovered) as n").Where("date = ?", date).Scan(&recoveredResult).Error
 	if err != nil {
 		fmt.Println(err)
-		return LatestData{}, err
+		return DailyData{}, err
 	}
 
-	latestData := LatestData {
+	latestData := DailyData {
 		Date: date,
 		Confirmed: confirmedResult.N,
 		Death: deathResult.N,

@@ -16,9 +16,14 @@ type DataListSerializer struct {
 	DataList []Data
 }
 
-type LatestDataSerializer struct {
+type DailyDataSerializer struct {
 	C *gin.Context
-	LatestData 
+	DailyData
+}
+
+type DailyDataListSerializer struct {
+	C *gin.Context
+	DailyDataList []DailyData
 }
 
 type DataResponse struct {
@@ -30,7 +35,7 @@ type DataResponse struct {
 	Death int `json:"death"`
 }
 
-type LatestDataResponse struct {
+type DailyDataResponse struct {
 	Date time.Time `json:"date"`
 	Confirmed int `json:"confirmed"`
 	Recovered int `json:"recovered"`
@@ -58,12 +63,21 @@ func (s *DataListSerializer) Response() []DataResponse {
 	return response
 }
 
-func (s *LatestDataSerializer) Response() LatestDataResponse{
-	response := LatestDataResponse {
-		Date: s.LatestData.Date,
-		Confirmed: s.LatestData.Confirmed,
-		Death: s.LatestData.Death,
-		Recovered: s.LatestData.Recovered,
+func (s *DailyDataSerializer) Response() DailyDataResponse {
+	response := DailyDataResponse {
+		Date: s.DailyData.Date,
+		Confirmed: s.DailyData.Confirmed,
+		Death: s.DailyData.Death,
+		Recovered: s.DailyData.Recovered,
+	}
+	return response
+}
+
+func (s *DailyDataListSerializer) Response() []DailyDataResponse {
+	response := []DailyDataResponse{}
+	for _, dailyData := range s.DailyDataList {
+		serializer := DailyDataSerializer{s.C, dailyData}
+		response = append(response, serializer.Response())
 	}
 	return response
 }

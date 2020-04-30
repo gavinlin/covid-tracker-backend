@@ -1,7 +1,6 @@
 package data
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -32,15 +31,15 @@ func LatestDataRetrieve(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 	}
-	serializer := LatestDataSerializer{c, latestData}
+	serializer := DailyDataSerializer{c, latestData}
 	c.JSON(http.StatusOK, gin.H{"data": serializer.Response()})
 }
 
 func DailyDataRetrieve(c *gin.Context) {
-	allDates, err := GetAllDates()
+	allDailyDatas, err := GetDailyDatas()
 	if err != nil {
-		log.Println(err)
-	} else {
-		log.Println("Get all dates length ", len(allDates), " and first one ", allDates[0])
-	}
+		c.JSON(http.StatusBadRequest, err)
+	} 	
+	serializer := DailyDataListSerializer{c, allDailyDatas}
+	c.JSON(http.StatusOK, gin.H{"daily": serializer.Response()})
 }
