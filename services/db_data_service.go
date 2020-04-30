@@ -1,15 +1,16 @@
 package services
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
 	"github.com/jinzhu/gorm"
 
-	"github.com/gavinlin/covid-tracker-backend/data"
 	"github.com/gavinlin/covid-tracker-backend/countries"
-
+	"github.com/gavinlin/covid-tracker-backend/data"
 )
 
 type dBDataService struct {
@@ -28,9 +29,13 @@ func (p *dBDataService) InitDatabase(confirmedData [][] string, recoveredData []
 	p.DB.AutoMigrate(&countries.Country{})
 	p.DB.AutoMigrate(&data.Data{})
 
+	m := make(map[string]countries.Country)
+
 	for i, s := range confirmedData{
 		if i != 0 {
 			country := getCountry(s, p.DB)
+			countryKey := getCountryKey(s);
+			m[countryKey] = country
 			for j, confirmed := range s {
 				if (j > 3) {
 					currentDate := getTime(confirmedData[0][j])
@@ -45,8 +50,13 @@ func (p *dBDataService) InitDatabase(confirmedData [][] string, recoveredData []
 			}
 		}
 	}
-	udpateDeathData(deathData, p.DB)
-	updateRecoveredData(recoveredData, p.DB)
+
+	udpateDeathData(deathData, p.DB, m)
+	updateRecoveredData(recoveredData, p.DB, m)
+}
+
+func getCountryKey(row []string) (string) {
+	return fmt.Sprintf("%s+%s",row[1], row[0]);
 }
 
 func getTime(original string) time.Time {
@@ -60,9 +70,11 @@ func getTime(original string) time.Time {
 }
 
 func (p *dBDataService) UpdateDatabase(confirmedData [][] string, recoveredData [][]string, deathData [][]string) {
+	m := make(map[string]countries.Country)
 	for i, s := range confirmedData{
 		if i != 0 {
 			country := getCountry(s, p.DB)
+			m[getCountryKey(s)] = country
 			log.Println("update country id is ", country.ID)
 			for j, confirmed := range s {
 				if (j > 3) {
@@ -78,14 +90,15 @@ func (p *dBDataService) UpdateDatabase(confirmedData [][] string, recoveredData 
 			}
 		}
 	}
-	udpateDeathData(deathData, p.DB)
-	updateRecoveredData(recoveredData, p.DB)
+	udpateDeathData(deathData, p.DB, m)
+	updateRecoveredData(recoveredData, p.DB, m)
 }
 
-func udpateDeathData(deathData [][]string, db *gorm.DB) {
+func udpateDeathData(deathData [][]string, db *gorm.DB, m map[string]countries.Country) {
 	for i, s:= range deathData {
 		if i != 0 {
-			country := getCountry(s, db)
+			// country := getCountry(s, db)
+			country := m[getCountryKey(s)]
 			for j, death := range s {
 				if (j > 3) {
 					currentDate := getTime(deathData[0][j])
@@ -100,10 +113,11 @@ func udpateDeathData(deathData [][]string, db *gorm.DB) {
 	}
 }
 
-func updateRecoveredData(recoveredData [][]string, db *gorm.DB) {
+func updateRecoveredData(recoveredData [][]string, db *gorm.DB, m map[string]countries.Country) {
 	for i, s:= range recoveredData {
 		if i != 0 {
-			country := getCountry(s, db)
+			// country := getCountry(s, db)
+			country := m[getCountryKey(s)]
 			for j, death := range s {
 				if (j > 3) {
 					currentDate := getTime(recoveredData[0][j])

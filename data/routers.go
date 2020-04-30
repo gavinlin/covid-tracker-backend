@@ -1,6 +1,7 @@
 package data
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -10,6 +11,7 @@ import (
 func DataRegister(router *gin.RouterGroup) {
 	router.GET("/id/:country_id", DataListRetrieve)
 	router.GET("/latest", LatestDataRetrieve)
+	router.GET("/daily", DailyDataRetrieve)
 }
 
 func DataListRetrieve(c *gin.Context) {
@@ -30,7 +32,15 @@ func LatestDataRetrieve(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)
 	}
-
 	serializer := LatestDataSerializer{c, latestData}
 	c.JSON(http.StatusOK, gin.H{"data": serializer.Response()})
+}
+
+func DailyDataRetrieve(c *gin.Context) {
+	allDates, err := GetAllDates()
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Println("Get all dates length ", len(allDates), " and first one ", allDates[0])
+	}
 }

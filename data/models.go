@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"time"
+	"github.com/jinzhu/gorm"
 
 	"github.com/gavinlin/covid-tracker-backend/common"
 )
@@ -38,34 +39,48 @@ type SumResult struct{
 
 func GetLatestData() (LatestData, error) {
 	db := common.GetDB()
-	var confirmedResult SumResult
-	var deathResult SumResult
-	var recoveredResult SumResult
 	var data Data
 	err := db.Table("data").Order("date DESC").Limit(1).Find(&data).Error
 	if err != nil {
 		fmt.Println(err)
 		return LatestData{}, err
 	}
+	return GetDataByDate(data.Date, db)
+}
 
-	err = db.Table("data").Select("sum(confirmed) as n").Where("date = ?", data.Date).Scan(&confirmedResult).Error
+func GetAllDates() ([]time.Time, error) {
+	var allDates []Data
+	var dates []time.Time
+	db := common.GetDB()
+	err := db.Table("data").Select("DISTINCT date").Scan(&allDates).Error
+	for _, data := range allDates {
+		dates = append(dates, data.Date)
+	}
+	return dates, err
+}
+
+func GetDataByDate(date time.Time, db *gorm.DB) (LatestData, error) {
+	var confirmedResult SumResult
+	var deathResult SumResult
+	var recoveredResult SumResult
+	err := db.Table("data").Select("sum(confirmed) as n").Where("date = ?", date).Scan(&confirmedResult).Error
 	if err != nil {
 		fmt.Println(err)
 		return LatestData{}, err
 	}
-	err = db.Table("data").Select("sum(death) as n").Where("date = ?", data.Date).Scan(&deathResult).Error
+	err = db.Table("data").Select("sum(death) as n").Where("date = ?", date).Scan(&deathResult).Error
 	if err != nil {
 		fmt.Println(err)
 		return LatestData{}, err
 	}
-	err = db.Table("data").Select("sum(recovered) as n").Where("date = ?", data.Date).Scan(&recoveredResult).Error
+	err = db.Table("data").Select("sum(recovered) as n").Where("date = ?", date).Scan(&recoveredResult).Error
 	if err != nil {
 		fmt.Println(err)
 		return LatestData{}, err
 	}
 
 	latestData := LatestData {
-		Date: data.Date,
+		Date: date,
 		Confirmed: confirmedResult.N,
 		Death: deathResult.N,
 		Recovered: recoveredResult.N,
